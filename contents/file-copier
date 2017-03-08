@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+set -eu
+
+scp() {
+    if [[ "${RD_CONFIG_DRY_RUN:-}" == "true" ]]
+    then 
+
+      echo >&2 "[dry-run] +------------------------------------------+"
+      echo >&2 "[dry-run] | ssh_config                               |"
+      echo >&2 "[dry-run] +------------------------------------------+"
+      while IFS= read -r line; do 
+        echo >&2 "[dry-run] | $line"
+      done < "$SSH_CONFIG_FILE"
+      echo >&2 "[dry-run] +------------------------------------------+"
+      echo >&2 "[dry-run] scp $*"
+    else 
+        command scp "$@"
+    fi
+}
+
+
+FILE_SOURCE=$1
+FILE_DESTINATION=$2
+
+
+SSH_CONFIG_FILE_TMP=$(mktemp -t "ssh_config.XXXX")
+SSH_CONFIG_FILE=$(mktemp -t "ssh_config.XXXX")
+SSH_NODE_KEY_FILE=$(mktemp -t "$RD_NODE_NAME.ssh-keyfile.XXXXX")
+SSH_BASTION_KEY_FILE=$(mktemp -t "bastion.ssh-keyfile.XXXXX")
+trap 'rm "$SSH_CONFIG_FILE_TMP" "$SSH_CONFIG_FILE" "$SSH_NODE_KEY_FILE" "$SSH_BASTION_KEY_FILE"' EXIT
+
+if [[ -z "${RD_CONFIG_BASTION_SSH_KEY_STORAGE_PATH:-}" ]]
+then
+  echo >&2 "ERROR: SSH key storage path was not configured for the bastion host."
+  env|grep RD_CONFIG|sort >&2
+  exit 1
+fi
+echo "$RD_CONFIG_BASTION_SSH_KEY_STORAGE_PATH" > "$SSH_BASTION_KEY_FILE"
+BASTION_IDENTITY_FILE="$SSH_BASTION_KEY_FILE"
+
+
+if [[ -n "${RD_NODE_SSH_KEY_STORAGE_PATH:-}" ]]
+then
+    echo "$RD_NODE_SSH_KEY_STORAGE_PATH" > "$SSH_NODE_KEY_FILE"
+    NODE_IDENTITY_FILE="$SSH_NODE_KEY_FILE"
+fi
+
+
+echo "$RD_CONFIG_SSH_CONFIG" > "$SSH_CONFIG_FILE_TMP"
+sed -e "s#@bastion_ssh_key@#$BASTION_IDENTITY_FILE#g" < "$SSH_CONFIG_FILE_TMP" > "$SSH_CONFIG_FILE"
+
+
+SSH_ARGS=($RD_CONFIG_SSH_OPTS -F "$SSH_CONFIG_FILE")
+[[ -n "${NODE_IDENTITY_FILE:-}" ]] && SSH_ARGS=(${SSH_ARGS[@]} -i "$NODE_IDENTITY_FILE")
+
+
+scp "${SSH_ARGS[@]}"  \
+   "$FILE_SOURCE" \
+   "${RD_NODE_USERNAME}@${RD_NODE_HOSTNAME}:${FILE_DESTINATION}"
+
+echo >&2 "$FILE_DESTINATION"
+
+exit $?
+

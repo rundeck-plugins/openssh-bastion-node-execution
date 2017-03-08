@@ -1,0 +1,99 @@
+name: openssh-bastion-host-node-execution
+rundeckPluginVersion: 1.2
+author: (C) Rundeck Inc
+date: 03/05/2017
+version: 1.0.0
+providers:
+    - name: openssh-bastion-host.node-executor
+      service: NodeExecutor
+      title: OpenSSH / Bastion host / Node Executor
+      description: 'Execute commands through a bastion host'
+      plugin-type: script
+      script-interpreter: /bin/bash
+      script-file: node-executor
+      script-args: ${exec.command}
+      config:
+        - name: bastion_ssh_key_storage_path
+          title: SSH Key Storage Path
+          type: String
+          required: true
+          description: 'Path to the Bastion host SSH Key to use within Key Storage.'
+          scope: Project
+          renderingOptions:
+            selectionAccessor: "STORAGE_PATH"
+            valueConversion: "STORAGE_PATH_AUTOMATIC_READ"
+            storage-path-root: "keys"
+            storage-file-meta-filter: "Rundeck-key-type=private"
+        - name: ssh_opts
+          title: 'SSH Options'
+          type: String
+          required: false
+          description: 'SSH command line arguments'
+          default: '-q -oCiphers=arcfour -oClearAllForwardings=yes'
+          scope: Project          
+        - name: ssh_config
+          title: 'Template ssh_config'
+          type: String
+          required: true
+          description: 'The SSH config template. Replace the "user@bastion" to match your needs.'
+          scope: Project          
+          renderingOptions:
+            displayType: CODE
+            codeSyntaxMode: batchfile
+          default: |
+              Host *
+                StrictHostKeyChecking no
+                Port 22
+                ProxyCommand ssh user@bastion -W %h:%p
+                IdentityFile @bastion_ssh_key@
+        - name: dry_run
+          title: 'Dry run?'
+          type: Boolean
+          required: false
+          description: 'Just echo what would be done'
+    - name: openssh-bastion-host.file-copier
+      service: FileCopier
+      title: OpenSSH / Bastion host / File Copier
+      description: 'Copies to a remote host via a bastion host'
+      plugin-type: script
+      script-interpreter: /bin/bash
+      script-file: file-copier
+      script-args: ${file-copy.file} ${file-copy.destination} 
+      config:
+        - name: bastion_ssh_key_storage_path
+          title: SSH Key Storage Path
+          type: String
+          required: true
+          description: 'Path to the Bastion host SSH Key to use within Key Storage.'
+          scope: Project
+          renderingOptions:
+            selectionAccessor: "STORAGE_PATH"
+            valueConversion: "STORAGE_PATH_AUTOMATIC_READ"
+            storage-path-root: "keys"
+            storage-file-meta-filter: "Rundeck-key-type=private"
+        - name: ssh_opts
+          title: 'SSH Options'
+          type: String
+          required: false
+          description: 'SSH command line arguments'
+          default: '-q -oCiphers=arcfour -oClearAllForwardings=yes'
+        - name: ssh_config
+          title: 'Template ssh_config'
+          type: String
+          required: true
+          description: 'The SSH config template. Replace the user@bastion to match your needs.'
+          scope: Project          
+          renderingOptions:
+            displayType: CODE
+            codeSyntaxMode: batchfile
+          default: |
+              Host *
+                StrictHostKeyChecking no
+                Port 22
+                ProxyCommand ssh user@bastion -W %h:%p
+                IdentityFile @bastion_ssh_key@
+        - name: dry_run
+          title: 'Dry run?'
+          type: Boolean
+          required: false
+          description: 'Just echo what would be done'
