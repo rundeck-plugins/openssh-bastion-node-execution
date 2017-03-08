@@ -55,4 +55,6 @@ ssh "${SSH_ARGS[@]}" \
    "${RD_NODE_USERNAME}@${RD_NODE_HOSTNAME}" \
    "$@"
 
+exit $?   
+
 
