@@ -19,7 +19,6 @@ ssh() {
     fi
 }
 
-## TODO?: set a default umask
 
 SSH_CONFIG_FILE_TMP=$(mktemp -t "ssh_config.XXXX")
 SSH_CONFIG_FILE=$(mktemp -t "ssh_config.XXXX")
@@ -37,9 +36,9 @@ echo "$RD_CONFIG_BASTION_SSH_KEY_STORAGE_PATH" > "$SSH_BASTION_KEY_FILE"
 BASTION_IDENTITY_FILE="$SSH_BASTION_KEY_FILE"
 
 
-if [[ -n "${RD_NODE_SSH_KEY_STORAGE_PATH:-}" ]]
+if [[ -n "${RD_CONFIG_SSH_KEY_STORAGE_PATH:-}" ]]
 then
-    echo "$RD_NODE_SSH_KEY_STORAGE_PATH" > "$SSH_NODE_KEY_FILE"
+    echo "$RD_CONFIG_SSH_KEY_STORAGE_PATH" > "$SSH_NODE_KEY_FILE"
     NODE_IDENTITY_FILE="$SSH_NODE_KEY_FILE"
 fi
 
@@ -55,6 +54,4 @@ ssh "${SSH_ARGS[@]}" \
    "${RD_NODE_USERNAME}@${RD_NODE_HOSTNAME}" \
    "$@"
 
-exit $?   
-
-
+exit $?

@@ -14,7 +14,7 @@ providers:
       script-args: ${exec.command}
       config:
         - name: bastion_ssh_key_storage_path
-          title: SSH Key Storage Path
+          title: Bastion SSH Key
           type: String
           required: true
           description: 'Path to the Bastion host SSH Key to use within Key Storage.'
@@ -24,11 +24,23 @@ providers:
             valueConversion: "STORAGE_PATH_AUTOMATIC_READ"
             storage-path-root: "keys"
             storage-file-meta-filter: "Rundeck-key-type=private"
+        - name: ssh_key_storage_path
+          title: Node SSH Key
+          type: String
+          required: false
+          description: "Optional storage path for Node ssh-key file. Declare a node attribute named ssh-key-storage-path."
+          scope: Instance
+          renderingOptions:
+            selectionAccessor: "STORAGE_PATH"
+            valueConversion: "STORAGE_PATH_AUTOMATIC_READ"
+            storage-path-root: "keys"
+            instance-scope-node-attribute: "ssh-key-storage-path"
+            storage-file-meta-filter: "Rundeck-key-type=private"            
         - name: ssh_opts
           title: 'SSH Options'
           type: String
           required: false
-          description: 'SSH command line arguments'
+          description: 'Optional SSH command line arguments'
           default: '-q -oCiphers=arcfour -oClearAllForwardings=yes'
           scope: Project          
         - name: ssh_config
@@ -51,6 +63,18 @@ providers:
           type: Boolean
           required: false
           description: 'Just echo what would be done'
+        - name: ssh_key_storage_path
+          title: Node SSH Key
+          type: String
+          required: false
+          description: "Optional storage path for Node specific ssh key. Declare a node attribute named ssh-key-storage-path."
+          scope: Instance
+          renderingOptions:
+            selectionAccessor: "STORAGE_PATH"
+            valueConversion: "STORAGE_PATH_AUTOMATIC_READ"
+            storage-path-root: "keys"
+            instance-scope-node-attribute: "ssh-key-storage-path"
+            storage-file-meta-filter: "Rundeck-key-type=private"
     - name: openssh-bastion-host.file-copier
       service: FileCopier
       title: OpenSSH / Bastion host / File Copier
@@ -61,7 +85,7 @@ providers:
       script-args: ${file-copy.file} ${file-copy.destination} 
       config:
         - name: bastion_ssh_key_storage_path
-          title: SSH Key Storage Path
+          title: Bastion SSH Key
           type: String
           required: true
           description: 'Path to the Bastion host SSH Key to use within Key Storage.'
@@ -71,17 +95,29 @@ providers:
             valueConversion: "STORAGE_PATH_AUTOMATIC_READ"
             storage-path-root: "keys"
             storage-file-meta-filter: "Rundeck-key-type=private"
+        - name: ssh_key_storage_path
+          title: Node SSH key
+          type: String
+          required: false
+          description: "Optional storage path for Node specific ssh key. Declare a node attribute named ssh-key-storage-path."
+          scope: Instance
+          renderingOptions:
+            selectionAccessor: "STORAGE_PATH"
+            valueConversion: "STORAGE_PATH_AUTOMATIC_READ"
+            storage-path-root: "keys"
+            instance-scope-node-attribute: "ssh-key-storage-path"
+            storage-file-meta-filter: "Rundeck-key-type=private"            
         - name: ssh_opts
           title: 'SSH Options'
           type: String
           required: false
-          description: 'SSH command line arguments'
+          description: 'Optional SSH command line arguments'
           default: '-q -oCiphers=arcfour -oClearAllForwardings=yes'
         - name: ssh_config
-          title: 'Template ssh_config'
+          title: ssh_config
           type: String
           required: true
-          description: 'The SSH config template. Replace the user@bastion to match your needs.'
+          description: 'The SSH config template. Replace the "user@bastion" to match your needs.'
           scope: Project          
           renderingOptions:
             displayType: CODE
@@ -97,3 +133,4 @@ providers:
           type: Boolean
           required: false
           description: 'Just echo what would be done'
+
