@@ -21,7 +21,7 @@ If the node is configured with the `ssh-key-storage-path` attribute, the ssh con
 
 * ssh-key-storage-path: Set to location in Rundeck Keystore
 
-### Configuration 
+## Configuration 
 
 The plugin can be configured as a default node executor and file copier for a Project. Use the Simple Conguration tab to see the configuration properties. The page has a form with inputs to configure the connection to the bastion host.
 
@@ -44,4 +44,29 @@ Here ssh_options are set.
 
     project.plugin.NodeExecutor.openssh-bastion-host.node-executor.ssh_options="-q -oCiphers=arcfour -oClearAllForwardings=yes"
 
+Using Dry run, you might see output similar to this:
 
+	[dry-run] +------------------------------------------+
+	[dry-run] | ssh_config                               |
+	[dry-run] +------------------------------------------+
+	[dry-run] | Host *
+	[dry-run] |   StrictHostKeyChecking no
+	[dry-run] |   Port 22
+	[dry-run] |   ProxyCommand ssh user@bastion -W %h:%p
+	[dry-run] |   IdentityFile /tmp/bastion.ssh-keyfile.prWLUyFU
+	[dry-run] +------------------------------------------+
+	[dry-run] ssh -q -oCiphers=arcfour -oClearAllForwardings=yes -F /tmp/ssh_config.zTr9j5KK -i /tmp/host1234.ssh-keyfile.4cjnI2qL alexh@Targa.local whoami
+	Begin copy 18 bytes to node host1234: /etc/motd -> /tmp/motd
+	[dry-run] +------------------------------------------+
+	[dry-run] | ssh_config                               |
+	[dry-run] +------------------------------------------+
+	[dry-run] | Host *
+	[dry-run] |   StrictHostKeyChecking no
+	[dry-run] |   Port 22
+	[dry-run] |   ProxyCommand ssh user@bastion -W %h:%p
+	[dry-run] |   IdentityFile /tmp/bastion.ssh-keyfile.XXXXX.WAlpZLNb
+	[dry-run] | 
+	[dry-run] +------------------------------------------+
+	[dry-run] scp -q -oCiphers=arcfour -oClearAllForwardings=yes -F /tmp/ssh_config.XXXX.cosJ7xQ2 -i /tmp/host1234.ssh-keyfile.XXXXX.BOqYAKRu /etc/motd alexh@Targa.local:/tmp/motd
+	/tmp/motd
+	Copied: /tmp/motd
