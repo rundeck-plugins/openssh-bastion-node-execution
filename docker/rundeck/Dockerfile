@@ -20,7 +20,6 @@ ENV RDECK_BASE=/home/rundeck
 RUN mkdir data
 
 COPY --chown=rundeck:rundeck ./plugins ./libext
-COPY --chown=rundeck:rundeck data data
 
 VOLUME ["/home/rundeck/server/data"]
 
