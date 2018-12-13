@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -e
+
+USERNAME=rundeck
+HOME=/home/rundeck
+
+CONTAINER_CONFIG_DIR=/home/rundeck/.ssh
+
+if [[ $SSHD_PORT == "" ]]; then
+    SSHD_PORT=22
+fi
+
+if [[ -d $CONTAINER_CONFIG_DIR ]]; then
+    echo "performing container configuration"
+    cp "$CONTAINER_CONFIG_DIR"/id_rsa.pub /home/rundeck/.ssh/authorized_keys
+    chown -R "$USERNAME" $HOME/.ssh
+fi
+
+exec /usr/sbin/sshd -oPort="$SSHD_PORT" -e -D

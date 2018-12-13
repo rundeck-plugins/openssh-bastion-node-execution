@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+USERNAME=rundeck
+HOME=/home/rundeck
+
+adduser --home $HOME --disabled-password --gecos "Rundeck" $USERNAME
+
+
+

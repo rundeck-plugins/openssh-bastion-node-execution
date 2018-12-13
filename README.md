@@ -70,3 +70,20 @@ Using Dry run, you might see output similar to this:
 	[dry-run] scp -q -oCiphers=arcfour -oClearAllForwardings=yes -F /tmp/ssh_config.XXXX.cosJ7xQ2 -i /tmp/host1234.ssh-keyfile.XXXXX.BOqYAKRu /etc/motd alexh@Targa.local:/tmp/motd
 	/tmp/motd
 	Copied: /tmp/motd
+
+
+
+# Docker Example
+
+To star the docker example:
+
+* Run `./star-docker-example.sh`
+* Got to `http://localhost:8080`
+* User/Password => admin/admin
+
+The example has two networks:
+
+* Network1: rundeck, bastion
+* Network2: bastion, linux-1, linux-2
+
+The goal of this example is that Rundeck connects to the nodes linux-1 and linux-2 through the bastion container (Rundeck cannot see linux-X nodes)

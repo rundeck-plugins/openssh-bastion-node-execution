@@ -1,0 +1,93 @@
+version: '2.4'
+services:
+  mysql:
+    image: mysql:5.7
+    ports:
+      - "3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=rundeckdb
+      - MYSQL_USER=rundeck
+      - MYSQL_PASSWORD=rundeck123.
+    networks:
+      - rundeck
+  rundeck:
+    build:
+      context: ./rundeck
+    mem_limit: ${mem_limit}
+    ports:
+     - "8080:4440"
+    links:
+      - mysql
+      - bastion
+    environment:
+      - RUNDECK_GRAILS_URL=http://localhost:8080
+      - RUNDECK_DATABASE_DRIVER=com.mysql.jdbc.Driver
+      - RUNDECK_DATABASE_URL=jdbc:mysql://mysql:3306/rundeckdb?autoReconnect=true&useSSL=false
+      - RUNDECK_DATABASE_USERNAME=rundeck
+      - RUNDECK_DATABASE_PASSWORD=rundeck123.
+    volumes:
+      - ${PWD}/data/bastion_id_rsa:/home/rundeck/.ssh/bastion_id_rsa
+      - ${PWD}/data/node_id_rsa:/home/rundeck/.ssh/node_id_rsa
+    networks:
+      - rundeck
+  rundeck-ops:
+    build:
+      context: ./rundeck-ops
+    links:
+      - rundeck
+    environment:
+      - RUNDECK_URL=http://localhost:8080
+      - RUNDECK_NODE_URL=http://rundeck:4440
+      - RUNDECK_USER=admin
+      - RUNDECK_PASSWORD=admin
+      # import projects
+      - CONFIG_SCRIPT_POSTSTART=scripts/import_project.sh
+      - PROJECTS_LIST=OpenSSH-Bastiondemo
+    volumes:
+      - ${PWD}/projects:/projects
+      - ${PWD}/data:/data
+    networks:
+      - rundeck
+  bastion:
+    build:
+      context: ./ssh
+    ports:
+      - "22"
+    links:
+      - linux-1
+      - linux-2
+    volumes:
+    - ${PWD}/data/bastion_id_rsa:/home/rundeck/.ssh/id_rsa
+    - ${PWD}/data/bastion_id_rsa.pub:/home/rundeck/.ssh/id_rsa.pub
+    networks:
+      - rundeck
+      - bastion
+  linux-1:
+    build:
+      context: ./ssh
+    ports:
+      - "22"
+    volumes:
+    - ${PWD}/data/node_id_rsa:/home/rundeck/.ssh/id_rsa
+    - ${PWD}/data/node_id_rsa.pub:/home/rundeck/.ssh/id_rsa.pub
+    networks:
+      - bastion
+  linux-2:
+    build:
+      context: ./ssh
+    ports:
+      - "22"
+    volumes:
+    - ${PWD}/data/node_id_rsa:/home/rundeck/.ssh/id_rsa
+    - ${PWD}/data/node_id_rsa.pub:/home/rundeck/.ssh/id_rsa.pub
+    networks:
+      - bastion
+volumes:
+  mariadb_data:
+    driver: local
+networks:
+  rundeck:
+    driver: bridge
+  bastion:
+    driver: bridge
