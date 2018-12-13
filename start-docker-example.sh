@@ -2,7 +2,7 @@
 #compile
 ./gradlew clean build
 
-cp build/libs/openssh-bastion-node-executor* docker/rundeck/plugins
+cp build/libs/*.zip docker/rundeck/plugins
 cd docker
 make clean
 make build
