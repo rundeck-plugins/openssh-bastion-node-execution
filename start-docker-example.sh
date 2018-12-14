@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+
+set -eu
+
 #compile
 ./gradlew clean build
 
