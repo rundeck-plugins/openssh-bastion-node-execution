@@ -39,7 +39,6 @@ RUN apt-get -y install rundeck-cli
 
 RUN mkdir -p scripts data
 COPY scripts scripts
-COPY data data
 
 RUN chmod -R a+x scripts/*
 

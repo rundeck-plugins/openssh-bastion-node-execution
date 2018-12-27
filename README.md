@@ -11,8 +11,9 @@ This can be useful when defining the configuration properties.
 ## Plugin Configuration Properties
 
 * Bastion SSH Key Storage Path: Identity to use for the bastion host connection.
-* SSH Options: Extra options to pass to the ssh command invocation
-* ssh_conifig: Specify ProxyCommand and other flags. Consult the reference for [ssh_config(5)](https://linux.die.net/man/5/ssh_config) to learn about posible settings.
+* SSH Options: Extra options to pass to the ssh command invocation. 
+  You can overwrite this attribute at node level, using ssh-bastion-ssh-config (node-executor) and scp-bastion-ssh-config (file-copier).
+* ssh_config: Specify ProxyCommand and other flags. Consult the reference for [ssh_config(5)](https://linux.die.net/man/5/ssh_config) to learn about posible settings.
 * Dry run? If set true, just print the command invocation that would be used but do not execute the command. This is useful to preview.
 
 ## Node Specific Key
@@ -84,6 +85,7 @@ To star the docker example:
 The example has two networks:
 
 * Network1: rundeck, bastion
-* Network2: bastion, linux-1, linux-2
+* Network2: bastion, linux-1 (running on port 2223), linux-2 (running on default port)
 
-The goal of this example is that Rundeck connects to the nodes linux-1 and linux-2 through the bastion container (Rundeck cannot see linux-X nodes)
+The goal of this example is that Rundeck connects to the nodes linux-1 and linux-2 through the bastion container (Rundeck cannot see linux-X nodes).
+Notices the node attribute for "linux-1" node, we set the port connection on the "SSH Options" at the node level.

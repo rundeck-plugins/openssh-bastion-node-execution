@@ -67,7 +67,9 @@ services:
     build:
       context: ./ssh
     ports:
-      - "22"
+      - "2223"
+    environment:
+      - SSHD_PORT=2223
     volumes:
     - ${PWD}/data/node_id_rsa:/home/rundeck/.ssh/id_rsa
     - ${PWD}/data/node_id_rsa.pub:/home/rundeck/.ssh/id_rsa.pub

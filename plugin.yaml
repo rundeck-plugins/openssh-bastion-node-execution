@@ -40,9 +40,11 @@ providers:
           title: 'SSH Options'
           type: String
           required: false
-          description: 'Optional SSH command line arguments'
-          default: '-q -oCiphers=arcfour -oClearAllForwardings=yes'
-          scope: Project          
+          description: 'Optional SSH command line arguments. You can overwrite this attribute at node level using ssh-bastion-ssh-config'
+          default: '-q -oClearAllForwardings=yes'
+          scope: Instance
+          renderingOptions:
+            instance-scope-node-attribute: "ssh-bastion-ssh-config"
         - name: ssh_config
           title: 'Template ssh_config'
           type: String
@@ -111,8 +113,11 @@ providers:
           title: 'SSH Options'
           type: String
           required: false
-          description: 'Optional SSH command line arguments'
-          default: '-q -oCiphers=arcfour -oClearAllForwardings=yes'
+          description: 'Optional SSH command line arguments. You can overwrite this attribute at node level using ssh-bastion-ssh-config'
+          default: '-q -oClearAllForwardings=yes'
+          scope: Instance
+          renderingOptions:
+            instance-scope-node-attribute: "scp-bastion-ssh-config"
         - name: ssh_config
           title: ssh_config
           type: String
