@@ -1,8 +1,17 @@
 name: openssh-bastion-host-node-execution
+description: This plugin provides a node-executor and file-copier supporting ssh actions through a bastion host. Use this plugin if you must access remote servers via a jump host.
 rundeckPluginVersion: 1.2
 author: (C) Rundeck Inc
 date: 03/05/2017
 version: 1.0.0
+rundeckCompatibilityVersion: 3.x
+targetHostCompatibility: unix
+license: Apache 2.0
+tags:
+  - script
+  - node executor
+  - file copier
+sourceLink: https://github.com/rundeck-plugins/openssh-bastion-node-execution
 providers:
     - name: openssh-bastion-host.node-executor
       service: NodeExecutor
