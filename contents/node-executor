@@ -42,9 +42,14 @@ then
     NODE_IDENTITY_FILE="$SSH_NODE_KEY_FILE"
 fi
 
-
 echo "$RD_CONFIG_SSH_CONFIG" > "$SSH_CONFIG_FILE_TMP"
-sed -e "s#@bastion_ssh_key@#$BASTION_IDENTITY_FILE#g" < "$SSH_CONFIG_FILE_TMP" > "$SSH_CONFIG_FILE"
+
+if [[ -n "${RD_CONFIG_BASTION_HOST:-}" ]]
+then
+    sed -e "s#@bastion_ssh_host@#$RD_CONFIG_BASTION_HOST#g" -e "s#@bastion_ssh_key@#$BASTION_IDENTITY_FILE#g" < "$SSH_CONFIG_FILE_TMP" > "$SSH_CONFIG_FILE"
+else
+    sed -e "s#@bastion_ssh_key@#$BASTION_IDENTITY_FILE#g" < "$SSH_CONFIG_FILE_TMP" > "$SSH_CONFIG_FILE"
+fi
 
 
 SSH_ARGS=($RD_CONFIG_SSH_OPTS -F "$SSH_CONFIG_FILE")
