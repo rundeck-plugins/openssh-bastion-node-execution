@@ -78,7 +78,7 @@ Using Dry run, you might see output similar to this:
 
 To star the docker example:
 
-* Run `./star-docker-example.sh`
+* Run `./start-docker-example.sh`
 * Got to `http://localhost:8080`
 * User/Password => admin/admin
 
