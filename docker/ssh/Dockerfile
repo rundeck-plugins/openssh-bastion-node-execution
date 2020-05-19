@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:bionic
 # latest LTS
 
 RUN apt-get -y update && \
