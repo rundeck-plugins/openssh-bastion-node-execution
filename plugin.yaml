@@ -22,6 +22,14 @@ providers:
       script-file: node-executor
       script-args: ${exec.command}
       config:
+        - name: bastion_host
+          title: Default Bastion Host.
+          type: String
+          required: false
+          description: 'Optional Default Bastion Host. You can overwrite this attribute at node level using ssh-bastion-host'
+          scope: Instance
+          renderingOptions:
+            instance-scope-node-attribute: "ssh-bastion-host"
         - name: bastion_ssh_key_storage_path
           title: Bastion SSH Key
           type: String
@@ -58,7 +66,7 @@ providers:
           title: 'Template ssh_config'
           type: String
           required: true
-          description: 'The SSH config template. Replace the "user@bastion" to match your needs.'
+          description: 'The SSH config template. Adjust the "user@bastion" to match your needs.'
           scope: Project          
           renderingOptions:
             displayType: CODE
@@ -67,7 +75,7 @@ providers:
               Host *
                 StrictHostKeyChecking no
                 Port 22
-                ProxyCommand ssh user@bastion -W %h:%p
+                ProxyCommand ssh user@@bastion_ssh_host@ -W %h:%p
                 IdentityFile @bastion_ssh_key@
         - name: dry_run
           title: 'Dry run?'
@@ -95,6 +103,14 @@ providers:
       script-file: file-copier
       script-args: ${file-copy.file} ${file-copy.destination} 
       config:
+        - name: bastion_host
+          title: Default Bastion Host.
+          type: String
+          required: false
+          description: 'Optional Default Bastion Host. You can overwrite this attribute at node level using ssh-bastion-host'
+          scope: Instance
+          renderingOptions:
+            instance-scope-node-attribute: "ssh-bastion-host"
         - name: bastion_ssh_key_storage_path
           title: Bastion SSH Key
           type: String
@@ -131,7 +147,7 @@ providers:
           title: ssh_config
           type: String
           required: true
-          description: 'The SSH config template. Replace the "user@bastion" to match your needs.'
+          description: 'The SSH config template. Adjust the "user@bastion" to match your needs.'
           scope: Project          
           renderingOptions:
             displayType: CODE
@@ -140,7 +156,7 @@ providers:
               Host *
                 StrictHostKeyChecking no
                 Port 22
-                ProxyCommand ssh user@bastion -W %h:%p
+                ProxyCommand ssh user@@bastion_ssh_host@ -W %h:%p
                 IdentityFile @bastion_ssh_key@
         - name: dry_run
           title: 'Dry run?'
