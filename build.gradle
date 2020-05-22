@@ -16,7 +16,7 @@ ext.archivesBaseName = "openssh-bastion-node-execution"
 ext.pluginBaseFolder = "."
 
 scmVersion {
-    ignoreUncommittedChanges = false
+    ignoreUncommittedChanges = true
     tag {
         prefix = ''
         versionSeparator = ''
