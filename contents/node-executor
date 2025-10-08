@@ -1,30 +1,21 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 set -eu
+USER=$1
+shift
+HOST=$1
+shift
+CMD="$*"
 
-ssh() {
-    if [[ "${RD_CONFIG_DRY_RUN:-}" == "true" ]]
-    then 
-
-      echo >&2 "[dry-run] +------------------------------------------+"
-      echo >&2 "[dry-run] | ssh_config                               |"
-      echo >&2 "[dry-run] +------------------------------------------+"
-      while IFS= read -r line; do 
-        echo >&2 "[dry-run] | $line"
-      done < "$SSH_CONFIG_FILE"
-      echo >&2 "[dry-run] +------------------------------------------+"
-      echo >&2 "[dry-run] ssh $*"
-    else 
-        command ssh "$@"
-    fi
-}
+PORT=${RD_NODE_SSH_PORT:-22}
+RD_CONFIG_DRY_RUN=${RD_CONFIG_DRY_RUN:-"false"}
 
 
-SSH_CONFIG_FILE_TMP=$(mktemp -t "ssh_config.XXXX")
-SSH_CONFIG_FILE=$(mktemp -t "ssh_config.XXXX")
 SSH_NODE_KEY_FILE=$(mktemp -t "$RD_NODE_NAME.ssh-keyfile.XXXXX")
 SSH_BASTION_KEY_FILE=$(mktemp -t "bastion.ssh-keyfile.XXXXX")
-trap 'rm "$SSH_CONFIG_FILE_TMP" "$SSH_CONFIG_FILE" "$SSH_NODE_KEY_FILE" "$SSH_BASTION_KEY_FILE"' EXIT
+trap 'rm "$SSH_NODE_KEY_FILE" "$SSH_BASTION_KEY_FILE"' EXIT
+
+
 
 if [[ -z "${RD_CONFIG_BASTION_SSH_KEY_STORAGE_PATH:-}" ]]
 then
@@ -42,21 +33,25 @@ then
     NODE_IDENTITY_FILE="$SSH_NODE_KEY_FILE"
 fi
 
-echo "$RD_CONFIG_SSH_CONFIG" > "$SSH_CONFIG_FILE_TMP"
-
-if [[ -n "${RD_CONFIG_BASTION_HOST:-}" ]]
-then
-    sed -e "s#@bastion_ssh_host@#$RD_CONFIG_BASTION_HOST#g" -e "s#@bastion_ssh_key@#$BASTION_IDENTITY_FILE#g" < "$SSH_CONFIG_FILE_TMP" > "$SSH_CONFIG_FILE"
-else
-    sed -e "s#@bastion_ssh_key@#$BASTION_IDENTITY_FILE#g" < "$SSH_CONFIG_FILE_TMP" > "$SSH_CONFIG_FILE"
-fi
 
 
-SSH_ARGS=($RD_CONFIG_SSH_OPTS -F "$SSH_CONFIG_FILE")
-[[ -n "${NODE_IDENTITY_FILE:-}" ]] && SSH_ARGS=(${SSH_ARGS[@]} -i "$NODE_IDENTITY_FILE")
+sed -i 's/\r$//' $SSH_BASTION_KEY_FILE
+echo >> $SSH_BASTION_KEY_FILE
+sed -i 's/\r$//' $SSH_NODE_KEY_FILE
+echo >> $SSH_NODE_KEY_FILE
 
-ssh "${SSH_ARGS[@]}" \
-   "${RD_NODE_USERNAME}@${RD_NODE_HOSTNAME}" \
-   "$@"
+chmod 0600 $SSH_BASTION_KEY_FILE
+chmod 0600 $SSH_NODE_KEY_FILE
 
-exit $?
+SSHOPTS="-p $PORT -o LogLevel=ERROR -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $RD_CONFIG_SSH_OPTIONS"
+
+
+#clean keys and password
+unset RD_CONFIG_SSH_KEY_STORAGE_PATH
+unset RD_NODEEXECUTOR_SSH_KEY_STORAGE_PATH
+unset RD_NODEEXECUTOR_SSH_KEY_PASSPHRASE_STORAGE_PATH
+unset RD_CONFIG_SSH_PASSWORD_STORAGE_PATH
+unset RD_NODEEXECUTOR_SSH_PASSWORD_STORAGE_PATH
+
+#echo "[ssh-exec]" "$RUNSSH"
+ssh $SSHOPTS -o ProxyCommand="ssh -i $BASTION_IDENTITY_FILE -o LogLevel=ERROR $RD_CONFIG_BASTION_USER@$RD_CONFIG_BASTION_HOST -W %h:%p" -i $SSH_NODE_KEY_FILE $USER@$HOST $CMD

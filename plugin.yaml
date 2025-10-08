@@ -3,7 +3,7 @@ description: This plugin provides a node-executor and file-copier supporting ssh
 rundeckPluginVersion: 1.2
 author: (C) Rundeck Inc
 date: 03/05/2017
-version: 1.0.0
+version: 2.0.0
 rundeckCompatibilityVersion: 3.x
 targetHostCompatibility: unix
 license: Apache 2.0
@@ -13,33 +13,26 @@ tags:
   - file copier
 sourceLink: https://github.com/rundeck-plugins/openssh-bastion-node-execution
 providers:
-    - name: openssh-bastion-host.node-executor
+    - name: openssh-bastion-exec
       service: NodeExecutor
       title: OpenSSH / Bastion host / Node Executor
       description: 'Execute commands through a bastion host'
       plugin-type: script
       script-interpreter: /bin/bash
-      script-file: node-executor
-      script-args: ${exec.command}
+      script-file: node-executor.sh
+      script-args: ${node.username} ${node.hostname} ${exec.command}
       config:
-        - name: bastion_host
-          title: Default Bastion Host.
-          type: String
-          required: false
-          description: 'Optional Default Bastion Host. You can overwrite this attribute at node level using ssh-bastion-host'
-          scope: Instance
-          renderingOptions:
-            instance-scope-node-attribute: "ssh-bastion-host"
         - name: bastion_ssh_key_storage_path
           title: Bastion SSH Key
           type: String
-          required: true
+          required: false
           description: 'Path to the Bastion host SSH Key to use within Key Storage.'
-          scope: Project
+          scope: Instance
           renderingOptions:
             selectionAccessor: "STORAGE_PATH"
             valueConversion: "STORAGE_PATH_AUTOMATIC_READ"
             storage-path-root: "keys"
+            instance-scope-node-attribute: "bastion-ssh-key-storage-path"
             storage-file-meta-filter: "Rundeck-key-type=private"
         - name: ssh_key_storage_path
           title: Node SSH Key
@@ -53,74 +46,53 @@ providers:
             storage-path-root: "keys"
             instance-scope-node-attribute: "ssh-key-storage-path"
             storage-file-meta-filter: "Rundeck-key-type=private"            
-        - name: ssh_opts
+        - name: ssh_options
           title: 'SSH Options'
           type: String
           required: false
           description: 'Optional SSH command line arguments. You can overwrite this attribute at node level using ssh-bastion-ssh-config'
-          default: '-q -oClearAllForwardings=yes'
+          default: '-q -o ClearAllForwardings=yes'
           scope: Instance
           renderingOptions:
             instance-scope-node-attribute: "ssh-bastion-ssh-config"
-        - name: ssh_config
-          title: 'Template ssh_config'
-          type: String
-          required: true
-          description: 'The SSH config template. Adjust the "user@bastion" to match your needs.'
-          scope: Project          
-          renderingOptions:
-            displayType: CODE
-            codeSyntaxMode: batchfile
-          default: |
-              Host *
-                StrictHostKeyChecking no
-                Port 22
-                ProxyCommand ssh user@@bastion_ssh_host@ -W %h:%p
-                IdentityFile @bastion_ssh_key@
-        - name: dry_run
-          title: 'Dry run?'
-          type: Boolean
-          required: false
-          description: 'Just echo what would be done'
-        - name: ssh_key_storage_path
-          title: Node SSH Key
+        - name: bastion_host
+          title: 'Default bastion host'
           type: String
           required: false
-          description: "Optional storage path for Node specific ssh key. Declare a node attribute named ssh-key-storage-path."
+          description: 'Optional bastion hostname or ip. You can overwrite this attribute at node level using ssh-bastion-host'
+          default: ''
           scope: Instance
           renderingOptions:
-            selectionAccessor: "STORAGE_PATH"
-            valueConversion: "STORAGE_PATH_AUTOMATIC_READ"
-            storage-path-root: "keys"
-            instance-scope-node-attribute: "ssh-key-storage-path"
-            storage-file-meta-filter: "Rundeck-key-type=private"
-    - name: openssh-bastion-host.file-copier
+            instance-scope-node-attribute: "ssh-bastion-host"
+        - name: bastion_user
+          title: 'Default bastion user'
+          type: String
+          required: false
+          description: 'Optional bastion username. You can overwrite this attribute at node level using ssh-bastion-user'
+          default: 'rundeck'
+          scope: Instance
+          renderingOptions:
+            instance-scope-node-attribute: "ssh-bastion-user"
+    - name: openssh-bastion-copier
       service: FileCopier
       title: OpenSSH / Bastion host / File Copier
       description: 'Copies to a remote host via a bastion host'
       plugin-type: script
       script-interpreter: /bin/bash
-      script-file: file-copier
-      script-args: ${file-copy.file} ${file-copy.destination} 
+      script-file: file-copier.sh
+      script-args: ${node.username} ${node.hostname}
       config:
-        - name: bastion_host
-          title: Default Bastion Host.
-          type: String
-          required: false
-          description: 'Optional Default Bastion Host. You can overwrite this attribute at node level using ssh-bastion-host'
-          scope: Instance
-          renderingOptions:
-            instance-scope-node-attribute: "ssh-bastion-host"
         - name: bastion_ssh_key_storage_path
           title: Bastion SSH Key
           type: String
-          required: true
+          required: false
           description: 'Path to the Bastion host SSH Key to use within Key Storage.'
-          scope: Project
+          scope: Instance
           renderingOptions:
             selectionAccessor: "STORAGE_PATH"
             valueConversion: "STORAGE_PATH_AUTOMATIC_READ"
             storage-path-root: "keys"
+            instance-scope-node-attribute: "bastion-ssh-key-storage-path"
             storage-file-meta-filter: "Rundeck-key-type=private"
         - name: ssh_key_storage_path
           title: Node SSH key
@@ -134,7 +106,7 @@ providers:
             storage-path-root: "keys"
             instance-scope-node-attribute: "ssh-key-storage-path"
             storage-file-meta-filter: "Rundeck-key-type=private"            
-        - name: ssh_opts
+        - name: ssh_options
           title: 'SSH Options'
           type: String
           required: false
@@ -143,24 +115,21 @@ providers:
           scope: Instance
           renderingOptions:
             instance-scope-node-attribute: "scp-bastion-ssh-config"
-        - name: ssh_config
-          title: ssh_config
+        - name: bastion_host
+          title: 'Default bastion host'
           type: String
-          required: true
-          description: 'The SSH config template. Adjust the "user@bastion" to match your needs.'
-          scope: Project          
-          renderingOptions:
-            displayType: CODE
-            codeSyntaxMode: batchfile
-          default: |
-              Host *
-                StrictHostKeyChecking no
-                Port 22
-                ProxyCommand ssh user@@bastion_ssh_host@ -W %h:%p
-                IdentityFile @bastion_ssh_key@
-        - name: dry_run
-          title: 'Dry run?'
-          type: Boolean
           required: false
-          description: 'Just echo what would be done'
-
+          description: 'Optional bastion hostname or ip. You can overwrite this attribute at node level using ssh-bastion-host'
+          default: ''
+          scope: Instance
+          renderingOptions:
+            instance-scope-node-attribute: "ssh-bastion-host"
+        - name: bastion_user
+          title: 'Default bastion user'
+          type: String
+          required: false
+          description: 'Optional bastion username. You can overwrite this attribute at node level using ssh-bastion-user'
+          default: 'rundeck'
+          scope: Instance
+          renderingOptions:
+            instance-scope-node-attribute: "ssh-bastion-user"

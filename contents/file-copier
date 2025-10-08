@@ -1,34 +1,19 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
-set -eu
+USER=$1
+shift
+HOST=$1
+shift
 
-scp() {
-    if [[ "${RD_CONFIG_DRY_RUN:-}" == "true" ]]
-    then 
+FILE=$RD_FILE_COPY_FILE
+DIR=$RD_FILE_COPY_DESTINATION
 
-      echo >&2 "[dry-run] +------------------------------------------+"
-      echo >&2 "[dry-run] | ssh_config                               |"
-      echo >&2 "[dry-run] +------------------------------------------+"
-      while IFS= read -r line; do 
-        echo >&2 "[dry-run] | $line"
-      done < "$SSH_CONFIG_FILE"
-      echo >&2 "[dry-run] +------------------------------------------+"
-      echo >&2 "[dry-run] scp $*"
-    else 
-        command scp "$@"
-    fi
-}
+PORT=${RD_NODE_SSH_PORT:-22}
+RD_CONFIG_DRY_RUN=${RD_CONFIG_DRY_RUN:-"false"}
 
-
-FILE_SOURCE=$1
-FILE_DESTINATION=$2
-
-
-SSH_CONFIG_FILE_TMP=$(mktemp -t "ssh_config.XXXX")
-SSH_CONFIG_FILE=$(mktemp -t "ssh_config.XXXX")
 SSH_NODE_KEY_FILE=$(mktemp -t "$RD_NODE_NAME.ssh-keyfile.XXXXX")
 SSH_BASTION_KEY_FILE=$(mktemp -t "bastion.ssh-keyfile.XXXXX")
-trap 'rm "$SSH_CONFIG_FILE_TMP" "$SSH_CONFIG_FILE" "$SSH_NODE_KEY_FILE" "$SSH_BASTION_KEY_FILE"' EXIT
+trap 'rm "$SSH_NODE_KEY_FILE" "$SSH_BASTION_KEY_FILE"' EXIT
 
 if [[ -z "${RD_CONFIG_BASTION_SSH_KEY_STORAGE_PATH:-}" ]]
 then
@@ -47,25 +32,21 @@ then
 fi
 
 
-echo "$RD_CONFIG_SSH_CONFIG" > "$SSH_CONFIG_FILE_TMP"
+sed -i 's/\r$//' $SSH_BASTION_KEY_FILE
+echo >> $SSH_BASTION_KEY_FILE
+sed -i 's/\r$//' $SSH_NODE_KEY_FILE
+echo >> $SSH_NODE_KEY_FILE
 
+chmod 0600 $SSH_BASTION_KEY_FILE
+chmod 0600 $SSH_NODE_KEY_FILE
 
-if [[ -n "${RD_CONFIG_BASTION_HOST:-}" ]]
-then
-    sed -e "s#@bastion_ssh_host@#$RD_CONFIG_BASTION_HOST#g" -e "s#@bastion_ssh_key@#$BASTION_IDENTITY_FILE#g" < "$SSH_CONFIG_FILE_TMP" > "$SSH_CONFIG_FILE"
-else
-    sed -e "s#@bastion_ssh_key@#$BASTION_IDENTITY_FILE#g" < "$SSH_CONFIG_FILE_TMP" > "$SSH_CONFIG_FILE"
-fi
+SSHOPTS="-P $PORT -o LogLevel=ERROR -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 
-SSH_ARGS=($RD_CONFIG_SSH_OPTS -F "$SSH_CONFIG_FILE")
-[[ -n "${NODE_IDENTITY_FILE:-}" ]] && SSH_ARGS=(${SSH_ARGS[@]} -i "$NODE_IDENTITY_FILE")
+#clean keys and password
+unset RD_CONFIG_SSH_KEY_STORAGE_PATH
+unset RD_NODEEXECUTOR_SSH_KEY_STORAGE_PATH
+unset RD_NODEEXECUTOR_SSH_KEY_PASSPHRASE_STORAGE_PATH
+unset RD_CONFIG_SSH_PASSWORD_STORAGE_PATH
+unset RD_NODEEXECUTOR_SSH_PASSWORD_STORAGE_PATH
 
-
-scp "${SSH_ARGS[@]}"  \
-   "$FILE_SOURCE" \
-   "${RD_NODE_USERNAME}@${RD_NODE_HOSTNAME}:${FILE_DESTINATION}"
-
-echo "$FILE_DESTINATION"
-
-exit $?
-
+scp $SSHOPTS -i $SSH_NODE_KEY_FILE -o ProxyCommand="ssh -i $BASTION_IDENTITY_FILE -o LogLevel=ERROR $RD_CONFIG_BASTION_USER@$RD_CONFIG_BASTION_HOST -W %h:%p" $FILE $USER@$HOST:$DIR 

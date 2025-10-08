@@ -7,24 +7,24 @@ This repository is no longer maintained and is only avaiable for historical exam
 This plugin provides a node-executor and file-copier supporting ssh actions through a bastion host.
 Use this plugin if you must access remote servers via a jump host.
 
-## Dry run mode
-
-You can configure the plugin to just print the invocation string to the console.
-This can be useful when defining the configuration properties.
-
 ## Plugin Configuration Properties
 
 * Bastion SSH Key Storage Path: Identity to use for the bastion host connection.
 * SSH Options: Extra options to pass to the ssh command invocation. 
   You can overwrite this attribute at node level, using ssh-bastion-ssh-config (node-executor) and scp-bastion-ssh-config (file-copier).
-* ssh_config: Specify ProxyCommand and other flags. Consult the reference for [ssh_config(5)](https://linux.die.net/man/5/ssh_config) to learn about posible settings.
-* Dry run? If set true, just print the command invocation that would be used but do not execute the command. This is useful to preview.
+* Bastion host: YOur jump server IP
+* Bastion User: Username to login at bastion host
 
 ## Node Specific Key
 
 If the node is configured with the `ssh-key-storage-path` attribute, the ssh connection will use that to connect to the remote node.
 
 * ssh-key-storage-path: Set to location in Rundeck Keystore
+
+## Node Specific username
+
+If the node is configured with the `username` attribute, the ssh connection will use that to connect to the remote node.
+
 
 ## Configuration 
 
@@ -33,50 +33,7 @@ The plugin can be configured as a default node executor and file copier for a Pr
 You can also modify the project.properties or use the API/CLI to define the plugin configuration.
 The Plugin List page will describe the key names to set.
 
-#### Customize the ssh_config 
-
-You can define multiple lines using a trailing backslash and an indent on the following line.
-
-Here is an example that defines ssh_config file. 
-
-    project.plugin.NodeExecutor.openssh-bastion-host.node-executor.ssh_config=Host * \
-      StrictHostKeyChecking no
-      Port 22
-      ProxyCommand ssh user@bastionhost -W %h\:%p
-      IdentityFile @plugin.config.identity_file@
-
-Here ssh_options are set.
-
-    project.plugin.NodeExecutor.openssh-bastion-host.node-executor.ssh_options="-q -oCiphers=arcfour -oClearAllForwardings=yes"
-
-Using Dry run, you might see output similar to this:
-
-	[dry-run] +------------------------------------------+
-	[dry-run] | ssh_config                               |
-	[dry-run] +------------------------------------------+
-	[dry-run] | Host *
-	[dry-run] |   StrictHostKeyChecking no
-	[dry-run] |   Port 22
-	[dry-run] |   ProxyCommand ssh user@bastion -W %h:%p
-	[dry-run] |   IdentityFile /tmp/bastion.ssh-keyfile.prWLUyFU
-	[dry-run] +------------------------------------------+
-	[dry-run] ssh -q -oCiphers=arcfour -oClearAllForwardings=yes -F /tmp/ssh_config.zTr9j5KK -i /tmp/host1234.ssh-keyfile.4cjnI2qL alexh@Targa.local whoami
-	Begin copy 18 bytes to node host1234: /etc/motd -> /tmp/motd
-	[dry-run] +------------------------------------------+
-	[dry-run] | ssh_config                               |
-	[dry-run] +------------------------------------------+
-	[dry-run] | Host *
-	[dry-run] |   StrictHostKeyChecking no
-	[dry-run] |   Port 22
-	[dry-run] |   ProxyCommand ssh user@bastion -W %h:%p
-	[dry-run] |   IdentityFile /tmp/bastion.ssh-keyfile.XXXXX.WAlpZLNb
-	[dry-run] | 
-	[dry-run] +------------------------------------------+
-	[dry-run] scp -q -oCiphers=arcfour -oClearAllForwardings=yes -F /tmp/ssh_config.XXXX.cosJ7xQ2 -i /tmp/host1234.ssh-keyfile.XXXXX.BOqYAKRu /etc/motd alexh@Targa.local:/tmp/motd
-	/tmp/motd
-	Copied: /tmp/motd
-
-
+For those who prefer to use configurations at node resource level, its possible now to setup this plugin using node attributes.
 
 # Docker Example
 
